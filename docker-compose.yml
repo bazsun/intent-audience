@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: intent-audience-postgres
+    environment:
+      POSTGRES_DB: intent_audience
+      POSTGRES_USER: intent_user
+      POSTGRES_PASSWORD: intent_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intent_user -d intent_audience"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:6
+    container_name: intent-audience-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: intent_user
+      MONGO_INITDB_ROOT_PASSWORD: intent_pass
+      MONGO_INITDB_DATABASE: intent_audience
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: intent-audience-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:

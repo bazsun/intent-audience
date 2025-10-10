@@ -1,0 +1,610 @@
+openapi: 3.0.3
+info:
+  title: ML Intent-Based Audience Pipeline API
+  description: API for generating and managing customer audiences based on ML intent predictions
+  version: 1.0.0
+  contact:
+    name: Intent-Audience Team
+    email: team@company.com
+
+servers:
+  - url: https://api.intent-audience.company.com/v1
+    description: Production server
+  - url: https://staging.intent-audience.company.com/v1
+    description: Staging server
+
+paths:
+  /audiences:
+    post:
+      summary: Generate new customer audience
+      description: Create audience for specified product category using ML intent predictions
+      operationId: createAudience
+      tags:
+        - Audiences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAudienceRequest'
+      responses:
+        '201':
+          description: Audience creation initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List existing audiences
+      description: Retrieve paginated list of audiences with optional filtering
+      operationId: listAudiences
+      tags:
+        - Audiences
+      parameters:
+        - name: category
+          in: query
+          description: Filter by product category
+          required: false
+          schema:
+            $ref: '#/components/schemas/ProductCategory'
+        - name: status
+          in: query
+          description: Filter by audience status
+          required: false
+          schema:
+            $ref: '#/components/schemas/AudienceStatus'
+        - name: page
+          in: query
+          description: Page number (1-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          required: false
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of audiences retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceListResponse'
+
+  /audiences/{audienceId}:
+    get:
+      summary: Get audience details
+      description: Retrieve detailed information about specific audience including quality metrics
+      operationId: getAudience
+      tags:
+        - Audiences
+      parameters:
+        - name: audienceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Audience details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceDetailResponse'
+        '404':
+          description: Audience not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update audience configuration
+      description: Modify audience threshold or status
+      operationId: updateAudience
+      tags:
+        - Audiences
+      parameters:
+        - name: audienceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAudienceRequest'
+      responses:
+        '200':
+          description: Audience updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AudienceResponse'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Audience not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /audiences/{audienceId}/customers:
+    get:
+      summary: Get customers in audience
+      description: Retrieve paginated list of customers with their intent scores
+      operationId: getAudienceCustomers
+      tags:
+        - Audiences
+      parameters:
+        - name: audienceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (1-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of customers per page
+          required: false
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 10000
+            default: 1000
+      responses:
+        '200':
+          description: Customer list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerListResponse'
+
+  /intent-scores:
+    post:
+      summary: Generate intent scores for customers
+      description: Compute 30-day purchase probability for specified category and customers
+      operationId: generateIntentScores
+      tags:
+        - Intent Scoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateScoresRequest'
+      responses:
+        '202':
+          description: Scoring job initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoringJobResponse'
+        '400':
+          description: Invalid scoring parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /intent-scores/{customerId}:
+    get:
+      summary: Get customer intent scores
+      description: Retrieve current intent scores for specific customer across all categories
+      operationId: getCustomerScores
+      tags:
+        - Intent Scoring
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Customer scores retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerScoresResponse'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /synthetic-data:
+    post:
+      summary: Generate synthetic datasets
+      description: Create realistic synthetic data for POC development and testing
+      operationId: generateSyntheticData
+      tags:
+        - Synthetic Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateSyntheticDataRequest'
+      responses:
+        '202':
+          description: Synthetic data generation initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticDataJobResponse'
+        '400':
+          description: Invalid generation parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Check system health and component status
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    ProductCategory:
+      type: string
+      enum: 
+        - Electronics
+        - Home_Garden
+        - Fashion
+        - Health_Beauty
+        - Grocery
+      description: Major retail product categories
+
+    AudienceStatus:
+      type: string
+      enum:
+        - Active
+        - Archived
+        - Draft
+      description: Current state of audience
+
+    CreateAudienceRequest:
+      type: object
+      required:
+        - category
+        - audience_name
+      properties:
+        category:
+          $ref: '#/components/schemas/ProductCategory'
+        audience_name:
+          type: string
+          maxLength: 100
+          description: Human-readable audience name
+        custom_threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Optional custom intent score threshold (overrides category default)
+        max_customers:
+          type: integer
+          minimum: 1000
+          maximum: 1000000
+          description: Maximum customers to include (optional cap)
+
+    UpdateAudienceRequest:
+      type: object
+      properties:
+        threshold:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: New intent score threshold
+        status:
+          $ref: '#/components/schemas/AudienceStatus'
+
+    AudienceResponse:
+      type: object
+      properties:
+        audience_id:
+          type: string
+          format: uuid
+        category:
+          $ref: '#/components/schemas/ProductCategory'
+        audience_name:
+          type: string
+        generation_date:
+          type: string
+          format: date-time
+        threshold_used:
+          type: number
+        total_customers:
+          type: integer
+        average_intent_score:
+          type: number
+        status:
+          $ref: '#/components/schemas/AudienceStatus'
+        estimated_completion_time:
+          type: string
+          format: date-time
+          description: When audience generation is expected to complete
+
+    AudienceDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/AudienceResponse'
+        - type: object
+          properties:
+            quality_metrics:
+              type: object
+              properties:
+                demographic_distribution:
+                  type: object
+                  description: Age, gender, lifestage breakdown
+                historical_conversion_rate:
+                  type: number
+                  description: Past performance for this category
+                geographic_coverage:
+                  type: object
+                  description: Postcode distribution
+            created_by:
+              type: string
+              format: uuid
+
+    AudienceListResponse:
+      type: object
+      properties:
+        audiences:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudienceResponse'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    CustomerListResponse:
+      type: object
+      properties:
+        customers:
+          type: array
+          items:
+            type: object
+            properties:
+              customer_id:
+                type: string
+                format: uuid
+              intent_score:
+                type: number
+              rank_in_audience:
+                type: integer
+              included_at:
+                type: string
+                format: date-time
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    GenerateScoresRequest:
+      type: object
+      required:
+        - category
+      properties:
+        category:
+          $ref: '#/components/schemas/ProductCategory'
+        customer_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 100000
+          description: Specific customers to score (optional, defaults to all eligible)
+
+    ScoringJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [Queued, Processing, Completed, Failed]
+        estimated_completion_time:
+          type: string
+          format: date-time
+        customer_count:
+          type: integer
+          description: Number of customers to score
+
+    CustomerScoresResponse:
+      type: object
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        scores:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                $ref: '#/components/schemas/ProductCategory'
+              intent_score:
+                type: number
+              model_version:
+                type: string
+              prediction_date:
+                type: string
+                format: date-time
+              expires_at:
+                type: string
+                format: date-time
+
+    GenerateSyntheticDataRequest:
+      type: object
+      required:
+        - entity_types
+        - customer_count
+      properties:
+        dataset_name:
+          type: string
+          maxLength: 100
+        entity_types:
+          type: array
+          items:
+            type: string
+            enum: [Customer, Transaction, Marketing, All]
+        customer_count:
+          type: integer
+          minimum: 1000
+          maximum: 1000000
+          description: Number of synthetic customers to generate
+        time_range_months:
+          type: integer
+          minimum: 6
+          maximum: 24
+          default: 12
+          description: Historical data period to simulate
+
+    SyntheticDataJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        dataset_name:
+          type: string
+        status:
+          type: string
+          enum: [Queued, Generating, Completed, Failed]
+        estimated_completion_time:
+          type: string
+          format: date-time
+        output_location:
+          type: string
+          description: Where generated files will be stored
+
+    PaginationInfo:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+        items_per_page:
+          type: integer
+        has_next:
+          type: boolean
+        has_previous:
+          type: boolean
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        components:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [up, down]
+            ml_models:
+              type: string
+              enum: [up, down]
+            cache:
+              type: string
+              enum: [up, down]
+        response_time_ms:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          description: Unique error identifier
+        message:
+          type: string
+          description: Human-readable error description
+        details:
+          type: object
+          description: Additional error context
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Audiences
+    description: Customer audience generation and management
+  - name: Intent Scoring  
+    description: ML-based intent prediction operations
+  - name: Synthetic Data
+    description: Test data generation for POC development
+  - name: System
+    description: System health and monitoring endpoints

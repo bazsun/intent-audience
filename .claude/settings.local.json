@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "WebSearch",
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
