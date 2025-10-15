@@ -39,7 +39,7 @@ class FeatureEngineer:
         if not self.config:
             raise ValueError(f"Category not found: {category}")
 
-        self.feature_list = self.config.model_config.features
+        self.feature_list = self.config.ml_model_config.features
         self.scaler = StandardScaler()
         self.label_encoders: Dict[str, LabelEncoder] = {}
 
@@ -67,20 +67,61 @@ class FeatureEngineer:
         if reference_date is None:
             reference_date = datetime.now()
 
-        # TODO: Implement feature engineering pipeline
-        # 1. Initialize empty features DataFrame
-        # 2. For each feature in self.feature_list:
-        #    - Call appropriate feature engineering method
-        #    - Add to features DataFrame
-        # 3. Handle missing values
-        # 4. Scale numerical features
-        # 5. Encode categorical features
-        # 6. Validate feature set matches model expectations
+        # OPTION C: Minimal viable implementation - basic features only
+        # Initialize with customer IDs
+        customer_ids = customers_df['customer_id'].unique()
+        features_df = pd.DataFrame(index=customer_ids)
+        features_df.index.name = 'customer_id'
 
-        raise NotImplementedError(
-            "Feature engineering pipeline not yet implemented. "
-            f"Required features for {self.category}: {self.feature_list}"
-        )
+        # 1. Transaction frequency (basic count)
+        tx_counts = transactions_df.groupby('customer_id').size()
+        features_df['transaction_frequency'] = tx_counts.reindex(customer_ids, fill_value=0)
+
+        # 2. Average order value
+        avg_amounts = transactions_df.groupby('customer_id')['transaction_amount'].mean()
+        features_df['average_order_value'] = avg_amounts.reindex(customer_ids, fill_value=0)
+
+        # 3. Days since last purchase (recency)
+        latest_dates = transactions_df.groupby('customer_id')['transaction_date'].max()
+        days_since = (reference_date - latest_dates).dt.days
+        features_df['days_since_last_purchase'] = days_since.reindex(customer_ids, fill_value=9999)
+
+        # 4. Total lifetime value
+        total_spend = transactions_df.groupby('customer_id')['transaction_amount'].sum()
+        features_df['total_lifetime_value'] = total_spend.reindex(customer_ids, fill_value=0)
+
+        # 5. Demographic score (simple: age normalized)
+        customer_demo = customers_df.set_index('customer_id')
+        features_df['age'] = customer_demo['age'].reindex(customer_ids, fill_value=40)
+        features_df['demographic_score'] = features_df['age'] / 100.0  # Simple normalization
+
+        # 6. Gender encoding (basic: M=1, F=0, Other=0.5)
+        gender_map = {'M': 1.0, 'F': 0.0, 'Other': 0.5, 'Prefer_not_to_say': 0.5}
+        features_df['gender_score'] = customer_demo['gender'].map(gender_map).reindex(customer_ids, fill_value=0.5)
+
+        # 7. Online channel preference (if channel data available)
+        if 'channel' in transactions_df.columns:
+            online_counts = transactions_df[transactions_df['channel'] == 'Online'].groupby('customer_id').size()
+            total_counts = transactions_df.groupby('customer_id').size()
+            online_ratio = (online_counts / total_counts).fillna(0)
+            features_df['online_preference'] = online_ratio.reindex(customer_ids, fill_value=0)
+        else:
+            features_df['online_preference'] = 0.5  # Default: no preference
+
+        # Handle missing values (fill with 0 for simplicity)
+        features_df = features_df.fillna(0)
+
+        # Basic scaling (normalize to 0-1 range for key features)
+        for col in ['transaction_frequency', 'average_order_value', 'total_lifetime_value']:
+            if features_df[col].max() > 0:
+                features_df[f'{col}_normalized'] = features_df[col] / features_df[col].max()
+            else:
+                features_df[f'{col}_normalized'] = 0
+
+        # Reset index to have customer_id as column
+        features_df = features_df.reset_index()
+
+        return features_df
 
     def calculate_transaction_frequency(
         self,

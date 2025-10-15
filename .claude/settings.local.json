@@ -3,7 +3,15 @@
     "allow": [
       "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
       "WebSearch",
-      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)"
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(docker exec:*)",
+      "Bash(test -f alembic.ini)",
+      "Bash(mkdir:*)",
+      "Bash(docker cp:*)",
+      "Bash(cat:*)",
+      "Bash(python:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

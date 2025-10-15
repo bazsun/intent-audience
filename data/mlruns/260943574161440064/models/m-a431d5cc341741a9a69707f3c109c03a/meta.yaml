@@ -1,0 +1,10 @@
+artifact_location: c:\Users\Barry\dev\git-repos\intent-audience\data\mlartifacts/models/m-a431d5cc341741a9a69707f3c109c03a/artifacts
+creation_timestamp: 1760501859335
+experiment_id: '260943574161440064'
+last_updated_timestamp: 1760501864694
+model_id: m-a431d5cc341741a9a69707f3c109c03a
+model_type: null
+name: model
+source_run_id: 06c76c3930b542fe9b9c035295345643
+status: 3
+status_message: null

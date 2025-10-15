@@ -1,0 +1,138 @@
+categories:
+  Electronics:
+    category_name: Electronics
+    min_audience_size: 1000
+    default_threshold: 0.75
+    ml_model_config:
+      algorithm: random_forest
+      hyperparameters:
+        n_estimators: 100
+        max_depth: 10
+        min_samples_split: 5
+        min_samples_leaf: 2
+        max_features: sqrt
+      features:
+      - transaction_frequency
+      - average_order_value
+      - days_since_last_purchase
+      - category_purchase_count
+      - total_lifetime_value
+      - demographic_score
+      - marketing_engagement_score
+      - online_channel_preference
+      test_split: 0.2
+      validation_split: 0.1
+      random_seed: 42
+    enabled: true
+    description: Consumer electronics and technology products
+  Home_Garden:
+    category_name: Home_Garden
+    min_audience_size: 1000
+    default_threshold: 0.7
+    ml_model_config:
+      algorithm: gradient_boosting
+      hyperparameters:
+        learning_rate: 0.1
+        n_estimators: 150
+        max_depth: 8
+        min_samples_split: 4
+        subsample: 0.8
+      features:
+      - transaction_frequency
+      - average_order_value
+      - days_since_last_purchase
+      - category_purchase_count
+      - seasonal_purchase_pattern
+      - demographic_score
+      - home_ownership_indicator
+      - geographic_cluster
+      test_split: 0.2
+      validation_split: 0.1
+      random_seed: 42
+    enabled: true
+    description: Home improvement, garden, and outdoor products
+  Fashion:
+    category_name: Fashion
+    min_audience_size: 1200
+    default_threshold: 0.65
+    ml_model_config:
+      algorithm: neural_network
+      hyperparameters:
+        hidden_layers:
+        - 64
+        - 32
+        - 16
+        activation: relu
+        dropout_rate: 0.3
+        learning_rate: 0.001
+        epochs: 50
+        batch_size: 32
+      features:
+      - transaction_frequency
+      - average_order_value
+      - days_since_last_purchase
+      - category_purchase_count
+      - brand_preference_score
+      - seasonal_purchase_pattern
+      - age_group
+      - gender_preference
+      - marketing_engagement_score
+      test_split: 0.2
+      validation_split: 0.1
+      random_seed: 42
+    enabled: true
+    description: Clothing, accessories, and fashion products
+  Health_Beauty:
+    category_name: Health_Beauty
+    min_audience_size: 1000
+    default_threshold: 0.72
+    ml_model_config:
+      algorithm: random_forest
+      hyperparameters:
+        n_estimators: 120
+        max_depth: 12
+        min_samples_split: 4
+        min_samples_leaf: 2
+        max_features: sqrt
+      features:
+      - transaction_frequency
+      - average_order_value
+      - days_since_last_purchase
+      - category_purchase_count
+      - repeat_purchase_rate
+      - demographic_score
+      - age_group
+      - lifestyle_indicator
+      - marketing_engagement_score
+      test_split: 0.2
+      validation_split: 0.1
+      random_seed: 42
+    enabled: true
+    description: Health, beauty, and personal care products
+  Grocery:
+    category_name: Grocery
+    min_audience_size: 1500
+    default_threshold: 0.68
+    ml_model_config:
+      algorithm: gradient_boosting
+      hyperparameters:
+        learning_rate: 0.1
+        n_estimators: 100
+        max_depth: 6
+        min_samples_split: 5
+        subsample: 0.9
+      features:
+      - transaction_frequency
+      - average_order_value
+      - days_since_last_purchase
+      - category_purchase_count
+      - basket_size_average
+      - online_vs_instore_ratio
+      - household_size_indicator
+      - geographic_cluster
+      - loyalty_tier
+      test_split: 0.2
+      validation_split: 0.1
+      random_seed: 42
+    enabled: true
+    description: Food, beverages, and grocery products

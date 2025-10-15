@@ -74,9 +74,10 @@ class CategoryConfig(BaseModel):
         le=1.0,
         description="Default intent score threshold"
     )
-    model_config: ModelConfig = Field(
+    ml_model_config: ModelConfig = Field(
         default_factory=ModelConfig,
-        description="ML model configuration"
+        description="ML model configuration",
+        alias="model_config"
     )
     enabled: bool = Field(
         default=True,
@@ -86,6 +87,10 @@ class CategoryConfig(BaseModel):
         default=None,
         description="Optional category description"
     )
+
+    class Config:
+        """Pydantic config."""
+        populate_by_name = True
 
 
 class CategoryConfigManager:
@@ -120,7 +125,7 @@ class CategoryConfigManager:
             category_name=ProductCategoryEnum.ELECTRONICS,
             min_audience_size=1000,
             default_threshold=0.75,
-            model_config=ModelConfig(
+            ml_model_config=ModelConfig(
                 algorithm=ModelAlgorithm.RANDOM_FOREST,
                 hyperparameters={
                     "n_estimators": 100,
@@ -148,7 +153,7 @@ class CategoryConfigManager:
             category_name=ProductCategoryEnum.HOME_GARDEN,
             min_audience_size=1000,
             default_threshold=0.70,
-            model_config=ModelConfig(
+            ml_model_config=ModelConfig(
                 algorithm=ModelAlgorithm.GRADIENT_BOOSTING,
                 hyperparameters={
                     "learning_rate": 0.1,
@@ -176,7 +181,7 @@ class CategoryConfigManager:
             category_name=ProductCategoryEnum.FASHION,
             min_audience_size=1200,
             default_threshold=0.65,
-            model_config=ModelConfig(
+            ml_model_config=ModelConfig(
                 algorithm=ModelAlgorithm.NEURAL_NETWORK,
                 hyperparameters={
                     "hidden_layers": [64, 32, 16],
@@ -206,7 +211,7 @@ class CategoryConfigManager:
             category_name=ProductCategoryEnum.HEALTH_BEAUTY,
             min_audience_size=1000,
             default_threshold=0.72,
-            model_config=ModelConfig(
+            ml_model_config=ModelConfig(
                 algorithm=ModelAlgorithm.RANDOM_FOREST,
                 hyperparameters={
                     "n_estimators": 120,
@@ -235,7 +240,7 @@ class CategoryConfigManager:
             category_name=ProductCategoryEnum.GROCERY,
             min_audience_size=1500,
             default_threshold=0.68,
-            model_config=ModelConfig(
+            ml_model_config=ModelConfig(
                 algorithm=ModelAlgorithm.GRADIENT_BOOSTING,
                 hyperparameters={
                     "learning_rate": 0.1,
@@ -265,6 +270,15 @@ class CategoryConfigManager:
             data = yaml.safe_load(f)
 
         for category_name, config_data in data.get("categories", {}).items():
+            # Convert enum string values back to enum instances
+            if 'category_name' in config_data and isinstance(config_data['category_name'], str):
+                config_data['category_name'] = ProductCategoryEnum(config_data['category_name'])
+
+            if 'ml_model_config' in config_data:
+                ml_config = config_data['ml_model_config']
+                if 'algorithm' in ml_config and isinstance(ml_config['algorithm'], str):
+                    ml_config['algorithm'] = ModelAlgorithm(ml_config['algorithm'])
+
             self.categories[category_name] = CategoryConfig(**config_data)
 
     def save_to_file(self):
@@ -272,12 +286,20 @@ class CategoryConfigManager:
         # Ensure directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Convert to dict format
+        # Convert to dict format with enum values as strings
         data = {
             "categories": {
-                name: config.dict() for name, config in self.categories.items()
+                name: config.model_dump(mode='python', by_alias=False)
+                for name, config in self.categories.items()
             }
         }
+
+        # Convert enum instances to their string values for YAML serialization
+        for category_name, config_dict in data["categories"].items():
+            if 'category_name' in config_dict:
+                config_dict['category_name'] = config_dict['category_name'].value
+            if 'ml_model_config' in config_dict and 'algorithm' in config_dict['ml_model_config']:
+                config_dict['ml_model_config']['algorithm'] = config_dict['ml_model_config']['algorithm'].value
 
         with open(self.config_path, 'w') as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)

@@ -24,9 +24,13 @@ class MLflowConfig:
             experiment_name: Name of the MLflow experiment
             artifact_location: S3 or local path for storing artifacts
         """
+        # For Windows, convert path to proper file URI format
+        mlruns_path = Path('data/mlruns').absolute()
+        # Convert Windows path to file URI (e.g., C:\path -> file:///C:/path)
+        default_tracking_uri = mlruns_path.as_uri()
         self.tracking_uri = tracking_uri or os.getenv(
             "MLFLOW_TRACKING_URI",
-            f"file://{Path('data/mlruns').absolute()}"
+            default_tracking_uri
         )
         self.experiment_name = experiment_name
         self.artifact_location = artifact_location or os.getenv(
